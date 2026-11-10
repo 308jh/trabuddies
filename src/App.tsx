@@ -1,3 +1,4 @@
+import Trips from './Trips'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
@@ -26,6 +27,7 @@ export default function App() {
       <h1>TraBuddies</h1>
       <p>Logged in as {session.user.email}</p>
       <button onClick={() => supabase.auth.signOut()}>Sign out</button>
+      <Trips />
     </div>
   )
 }
