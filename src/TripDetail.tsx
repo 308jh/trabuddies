@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import type { Trip } from './Trips'
+import Receipts from './Receipts'
 
-type Member = { id: number; user_id: string | null; display_name: string }
+export type Member = { id: number; user_id: string | null; display_name: string }
 
 export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () => void }) {
   const [members, setMembers] = useState<Member[]>([])
@@ -79,6 +80,7 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
       />
       <button onClick={addGuest}>Add guest</button>
 
+      <Receipts tripId={trip.id} members={members} />
       {message && <p>{message}</p>}
     </div>
   )
