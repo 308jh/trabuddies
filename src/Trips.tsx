@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 
-type Trip = { id: number; name: string; created_at: string }
+export type Trip = { id: number; name: string; created_at: string }
 
-export default function Trips() {
+export default function Trips({ onSelect }: { onSelect: (t: Trip) => void }) {
   const [trips, setTrips] = useState<Trip[]>([])
   const [name, setName] = useState('')
   const [error, setError] = useState('')
@@ -45,7 +45,9 @@ export default function Trips() {
       {error && <p>{error}</p>}
       <ul>
         {trips.map((t) => (
-          <li key={t.id}>{t.name}</li>
+          <li key={t.id}>
+            <button onClick={() => onSelect(t)}>{t.name}</button>
+          </li>
         ))}
       </ul>
     </div>
