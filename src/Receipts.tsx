@@ -21,7 +21,15 @@ function splitEqually(total: number, ids: number[]) {
   }))
 }
 
-export default function Receipts({ tripId, members }: { tripId: number; members: Member[] }) {
+export default function Receipts({
+  tripId,
+  members,
+  onChange,
+}: {
+  tripId: number
+  members: Member[]
+  onChange: () => void
+}) {
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
@@ -94,12 +102,16 @@ export default function Receipts({ tripId, members }: { tripId: number; members:
     setSharedBy([])
     setMessage('Receipt added!')
     loadReceipts()
+    onChange()
   }
 
   async function deleteReceipt(id: number) {
     const { error } = await supabase.from('receipts').delete().eq('id', id)
     if (error) setMessage(error.message)
-    else loadReceipts()
+    else {
+        loadReceipts() 
+        onChange()
+    }
   }
 
   return (

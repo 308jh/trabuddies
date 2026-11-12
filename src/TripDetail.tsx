@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import type { Trip } from './Trips'
 import Receipts from './Receipts'
+import Balances from './Balances'
 
 export type Member = { id: number; user_id: string | null; display_name: string }
 
@@ -10,6 +11,7 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
   const [email, setEmail] = useState('')
   const [guestName, setGuestName] = useState('')
   const [message, setMessage] = useState('')
+  const [version, setVersion] = useState(0)
 
   async function loadMembers() {
     const { data, error } = await supabase
@@ -80,7 +82,12 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
       />
       <button onClick={addGuest}>Add guest</button>
 
-      <Receipts tripId={trip.id} members={members} />
+      <Balances tripId={trip.id} members={members} version={version} />
+      <Receipts
+        tripId={trip.id}
+        members={members}
+        onChange={() => setVersion((v) => v + 1)}
+      />
       {message && <p>{message}</p>}
     </div>
   )
