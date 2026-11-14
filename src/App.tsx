@@ -1,10 +1,10 @@
-
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
 import AuthForm from './AuthForm'
-import Trips, { type Trip } from './Trips'
+import Dashboard from './Dashboard'
 import TripDetail from './TripDetail'
+import type { Trip } from './Trips'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -22,7 +22,12 @@ export default function App() {
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  if (loading) return <p>Loading...</p>
+  // the CSS uses this class to widen the page and calm the map once you are logged in
+  useEffect(() => {
+    document.documentElement.classList.toggle('in-app', !!session)
+  }, [session])
+
+  if (loading) return <p className="muted">Loading...</p>
   if (!session) return <AuthForm />
 
   return (
@@ -32,15 +37,24 @@ export default function App() {
           <img src="/logo.svg" alt="" width={36} height={36} />
           <span>TraBuddies</span>
         </div>
-        <button className="ghost" onClick={() => supabase.auth.signOut()}>
-          Sign out
-        </button>
+        <div className="header-right">
+          <span className="user-chip">{session.user.email}</span>
+          <button
+            className="ghost"
+            onClick={() => {
+              setSelectedTrip(null)
+              supabase.auth.signOut()
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </header>
-      <p className="muted">{session.user.email}</p>
+
       {selectedTrip ? (
         <TripDetail trip={selectedTrip} onBack={() => setSelectedTrip(null)} />
       ) : (
-        <Trips onSelect={setSelectedTrip} />
+        <Dashboard session={session} onOpen={setSelectedTrip} />
       )}
     </div>
   )

@@ -51,49 +51,58 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
     }
   }
 
-return (
+  return (
     <div>
-      <button className="ghost" onClick={onBack}>← Back</button>
-      <h2>{trip.name}</h2>
+      <button className="ghost" onClick={onBack}>
+        ← Dashboard
+      </button>
+      <span className="eyebrow">Trip</span>
+      <h1 className="trip-title">{trip.name}</h1>
 
-      <Balances tripId={trip.id} members={members} version={version} />
-      <Receipts
-        tripId={trip.id}
-        members={members}
-        onChange={() => setVersion((v) => v + 1)}
-      />
+      <div className="trip-cols">
+        <div>
+          <Balances tripId={trip.id} members={members} version={version} />
+          <Receipts
+            tripId={trip.id}
+            members={members}
+            onChange={() => setVersion((v) => v + 1)}
+          />
+        </div>
 
-      <div className="card">
-        <h3>Members</h3>
-        <ul>
-          {members.map((m) => (
-            <li key={m.id}>
-              {m.display_name} {m.user_id ? '' : '(guest)'}
-            </li>
-          ))}
-        </ul>
+        <div>
+          <div className="card">
+            <h3>Members</h3>
+            <ul>
+              {members.map((m) => (
+                <li key={m.id}>
+                  {m.display_name} {m.user_id ? '' : '(guest)'}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="card">
+            <h3>Add a friend with an account</h3>
+            <input
+              type="email"
+              placeholder="Friend's email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <button onClick={addByEmail}>Add friend</button>
+
+            <h3>Add a guest (no account)</h3>
+            <input
+              placeholder="Guest name"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+            />
+            <button onClick={addGuest}>Add guest</button>
+          </div>
+
+          {message && <p className="muted">{message}</p>}
+        </div>
       </div>
-
-      <div className="card">
-        <h3>Add a friend with an account</h3>
-        <input
-          type="email"
-          placeholder="Friend's email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <button onClick={addByEmail}>Add friend</button>
-
-        <h3>Add a guest (no account)</h3>
-        <input
-          placeholder="Guest name"
-          value={guestName}
-          onChange={(e) => setGuestName(e.target.value)}
-        />
-        <button onClick={addGuest}>Add guest</button>
-      </div>
-
-      {message && <p className="muted">{message}</p>}
     </div>
   )
 }
