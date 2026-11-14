@@ -34,7 +34,7 @@ export default function Trips({ onSelect }: { onSelect: (t: Trip) => void }) {
   }
 
   return (
-    <div>
+    <div className="card">
       <h2>My trips</h2>
       <input
         placeholder="New trip name"

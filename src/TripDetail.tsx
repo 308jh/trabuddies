@@ -51,36 +51,10 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
     }
   }
 
-  return (
+return (
     <div>
-      <button onClick={onBack}>← Back to trips</button>
+      <button className="ghost" onClick={onBack}>← Back</button>
       <h2>{trip.name}</h2>
-
-      <h3>Members</h3>
-      <ul>
-        {members.map((m) => (
-          <li key={m.id}>
-            {m.display_name} {m.user_id ? '' : '(guest)'}
-          </li>
-        ))}
-      </ul>
-
-      <h3>Add a friend with an account</h3>
-      <input
-        type="email"
-        placeholder="Friend's email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <button onClick={addByEmail}>Add</button>
-
-      <h3>Add a guest (no account)</h3>
-      <input
-        placeholder="Guest name"
-        value={guestName}
-        onChange={(e) => setGuestName(e.target.value)}
-      />
-      <button onClick={addGuest}>Add guest</button>
 
       <Balances tripId={trip.id} members={members} version={version} />
       <Receipts
@@ -88,7 +62,38 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
         members={members}
         onChange={() => setVersion((v) => v + 1)}
       />
-      {message && <p>{message}</p>}
+
+      <div className="card">
+        <h3>Members</h3>
+        <ul>
+          {members.map((m) => (
+            <li key={m.id}>
+              {m.display_name} {m.user_id ? '' : '(guest)'}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="card">
+        <h3>Add a friend with an account</h3>
+        <input
+          type="email"
+          placeholder="Friend's email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <button onClick={addByEmail}>Add friend</button>
+
+        <h3>Add a guest (no account)</h3>
+        <input
+          placeholder="Guest name"
+          value={guestName}
+          onChange={(e) => setGuestName(e.target.value)}
+        />
+        <button onClick={addGuest}>Add guest</button>
+      </div>
+
+      {message && <p className="muted">{message}</p>}
     </div>
   )
 }

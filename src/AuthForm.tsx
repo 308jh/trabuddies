@@ -16,24 +16,37 @@ export default function AuthForm() {
     if (error) setMessage(error.message)
   }
 
-  return (
-    <div>
-      <h1>TraBuddies</h1>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password (min 6 characters)"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+return (
+    <div className="card auth">
+      <img src="/logo.svg" alt="TraBuddies" width={56} height={56} />
+      <span className="eyebrow">TraBuddies — travel bills, split</span>
+      <h1>SPLIT<br />THE TRIP</h1>
+      <p className="muted">Sign in to continue</p>
+
+      <div className="field">
+        <label htmlFor="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+      <div className="field">
+        <label htmlFor="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </div>
+
       <button onClick={signIn}>Sign in</button>
-      <button onClick={signUp}>Sign up</button>
-      <p>{message}</p>
+      <button className="ghost" onClick={signUp}>Create account</button>
+      <p className="muted">{message}</p>
     </div>
   )
 }

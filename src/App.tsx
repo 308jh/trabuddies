@@ -26,15 +26,22 @@ export default function App() {
   if (!session) return <AuthForm />
 
   return (
-  <div>
-    <h1>TraBuddies</h1>
-    <p>Logged in as {session.user.email}</p>
-    <button onClick={() => supabase.auth.signOut()}>Sign out</button>
-    {selectedTrip ? (
-      <TripDetail trip={selectedTrip} onBack={() => setSelectedTrip(null)} />
-    ) : (
-      <Trips onSelect={setSelectedTrip} />
-    )}
-  </div>
+    <div>
+      <header className="app-header">
+        <div className="brand">
+          <img src="/logo.svg" alt="" width={36} height={36} />
+          <span>TraBuddies</span>
+        </div>
+        <button className="ghost" onClick={() => supabase.auth.signOut()}>
+          Sign out
+        </button>
+      </header>
+      <p className="muted">{session.user.email}</p>
+      {selectedTrip ? (
+        <TripDetail trip={selectedTrip} onBack={() => setSelectedTrip(null)} />
+      ) : (
+        <Trips onSelect={setSelectedTrip} />
+      )}
+    </div>
   )
 }

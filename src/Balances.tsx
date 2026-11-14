@@ -33,14 +33,14 @@ export default function Balances({
   const payments = settleUp(net)
 
   return (
-    <div>
+    <div className="card">
       <h3>Balances</h3>
       {error && <p>{error}</p>}
       <ul>
         {members.map((m) => {
           const v = net.get(m.id) ?? 0
           return (
-            <li key={m.id}>
+            <li key={m.id} className={v > 0 ? 'pos': v < 0 ? 'neg':''}>
               {m.display_name}:{' '}
               {v > 0 ? `gets back ${money(v)}` : v < 0 ? `owes ${money(-v)}` : 'all settled'}
             </li>
