@@ -24,11 +24,22 @@ type TripRow = {
 const toCents = (n: number) => Math.round(n * 100)
 const money = (cents: number) => (cents / 100).toFixed(2)
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: 'pos' | 'neg' }) {
+function Stat({
+  label,
+  value,
+  tone,
+  note,
+}: {
+  label: string
+  value: string
+  tone?: 'pos' | 'neg'
+  note?: string
+}) {
   return (
     <div className="card stat">
       <span className="eyebrow">{label}</span>
       <strong className={tone}>{value}</strong>
+      {note && <span className="stat-note">{note}</span>}
     </div>
   )
 }
@@ -66,7 +77,8 @@ export default function Dashboard({
 
   // everything below is calculated from the trips, in cents
   const view = useMemo(() => {
-    let spent = 0
+    let share = 0 // what the trips really cost YOU (your part of every receipt)
+    let paid = 0 // what you paid upfront out of your own pocket
     let owed = 0
     let owe = 0
     const payments: { key: string; text: string; amount: number; trip: string; get: boolean }[] = []
@@ -81,7 +93,24 @@ export default function Dashboard({
       const net = computeNet(t.receipts)
       const mine = me ? (net.get(me.id) ?? 0) : 0
 
-      spent += total
+      const myShare = me
+        ? t.receipts.reduce(
+            (sum, r) =>
+              sum +
+              r.splits
+                .filter((s) => s.owed_by === me.id)
+                .reduce((a, s) => a + toCents(s.amount), 0),
+            0
+          )
+        : 0
+      const myPaid = me
+        ? t.receipts
+            .filter((r) => r.paid_by === me.id)
+            .reduce((sum, r) => sum + toCents(r.amount), 0)
+        : 0
+
+      share += myShare
+      paid += myPaid
       if (mine > 0) owed += mine
       if (mine < 0) owe += -mine
 
@@ -117,11 +146,18 @@ export default function Dashboard({
         })
       }
 
-      return { trip: t, members: t.trip_members.length, receipts: t.receipts.length, total, mine }
+      return {
+        trip: t,
+        members: t.trip_members.length,
+        receipts: t.receipts.length,
+        total,
+        share: myShare,
+        mine,
+      }
     })
 
     recent.sort((a, b) => b.id - a.id)
-    return { cards, spent, owed, owe, payments, recent: recent.slice(0, 6) }
+    return { cards, share, paid, owed, owe, payments, recent: recent.slice(0, 6) }
   }, [rows, myId])
 
   async function createTrip() {
@@ -159,7 +195,11 @@ export default function Dashboard({
 
       <section className="stats">
         <Stat label="Trips" value={String(rows.length)} />
-        <Stat label="Total spent" value={money(view.spent)} />
+        <Stat
+          label="Your spending"
+          value={money(view.share)}
+          note={`you paid ${money(view.paid)} upfront`}
+        />
         <Stat label="You are owed" value={money(view.owed)} tone="pos" />
         <Stat label="You owe" value={money(view.owe)} tone="neg" />
       </section>
@@ -189,7 +229,7 @@ export default function Dashboard({
                   </span>
                   <h2>{c.trip.name}</h2>
                   <div className="trip-meta">
-                    <span className="muted">{money(c.total)} spent</span>
+                    <span className="muted">your share {money(c.share)}</span>
                     <span className={`chip ${c.mine > 0 ? 'pos' : c.mine < 0 ? 'neg' : ''}`}>
                       {c.mine > 0
                         ? `gets back ${money(c.mine)}`

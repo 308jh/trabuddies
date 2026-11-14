@@ -395,3 +395,13 @@ li.neg { color: var(--danger); font-weight: 600; }
 }
 .card li button::after { content: none; }
 
+/* small grey line under a stat number */
+.stat-note {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--dim);
+}
+
