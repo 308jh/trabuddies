@@ -6,8 +6,17 @@ import Balances from './Balances'
 
 export type Member = { id: number; user_id: string | null; display_name: string }
 
-export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () => void }) {
+export default function TripDetail({
+  trip,
+  userId,
+  onBack,
+}: {
+  trip: Trip
+  userId: string
+  onBack: () => void
+}) {
   const [members, setMembers] = useState<Member[]>([])
+  const [isCreator, setIsCreator] = useState(false)
   const [email, setEmail] = useState('')
   const [guestName, setGuestName] = useState('')
   const [message, setMessage] = useState('')
@@ -26,6 +35,16 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
   useEffect(() => {
     loadMembers()
   }, [trip.id])
+
+  // the trip creator also approves payments made to guests (guests have no account)
+  useEffect(() => {
+    supabase
+      .from('trips')
+      .select('created_by')
+      .eq('id', trip.id)
+      .single()
+      .then(({ data }) => setIsCreator(data?.created_by === userId))
+  }, [trip.id, userId])
 
   async function addByEmail() {
     const { error } = await supabase.rpc('add_member_by_email', {
@@ -61,7 +80,13 @@ export default function TripDetail({ trip, onBack }: { trip: Trip; onBack: () =>
 
       <div className="trip-cols">
         <div>
-          <Balances tripId={trip.id} members={members} version={version} />
+          <Balances
+            tripId={trip.id}
+            members={members}
+            version={version}
+            userId={userId}
+            isCreator={isCreator}
+          />
           <Receipts
             tripId={trip.id}
             members={members}

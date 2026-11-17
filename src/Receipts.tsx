@@ -60,6 +60,11 @@ export default function Receipts({
     )
   }
 
+  const everyone = members.length > 0 && sharedBy.length === members.length
+  function toggleEveryone() {
+    setSharedBy(everyone ? [] : members.map((m) => m.id))
+  }
+
   async function addReceipt() {
     const total = parseFloat(amount)
     if (!total || total <= 0 || paidBy === '' || sharedBy.length === 0) {
@@ -106,16 +111,18 @@ export default function Receipts({
   }
 
   async function deleteReceipt(id: number) {
+    // receipts are the history: only delete one that was entered by mistake
+    if (!window.confirm('Delete this receipt? Everyone’s balances will change.')) return
     const { error } = await supabase.from('receipts').delete().eq('id', id)
     if (error) setMessage(error.message)
     else {
-        loadReceipts() 
-        onChange()
+      loadReceipts()
+      onChange()
     }
   }
 
   return (
-    <div>
+    <div className="card">
       <h3>Add a receipt</h3>
       <input
         placeholder="What was it for? (e.g. Dinner)"
@@ -124,60 +131,81 @@ export default function Receipts({
       />
       <input
         type="number"
+        inputMode="decimal"
         step="0.01"
         placeholder="Amount"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
       />
 
-      <div>
-        <label>Paid by: </label>
-        <select
-          value={paidBy}
-          onChange={(e) =>
-            setPaidBy(e.target.value === '' ? '' : Number(e.target.value))
-          }
-        >
-          <option value="">Choose...</option>
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.display_name}
-            </option>
-          ))}
-        </select>
+      <span className="field-label">Paid by</span>
+      <div className="pills">
+        {members.map((m) => (
+          <button
+            type="button"
+            key={m.id}
+            className={`pill ${paidBy === m.id ? 'on' : ''}`}
+            onClick={() => setPaidBy(m.id)}
+          >
+            {m.display_name}
+          </button>
+        ))}
       </div>
 
-      <div>
-        <label>Shared by: </label>
-        <button onClick={() => setSharedBy(members.map((m) => m.id))}>
+      <span className="field-label">Shared by</span>
+      <div className="pills">
+        <button
+          type="button"
+          className={`pill ${everyone ? 'on' : ''}`}
+          onClick={toggleEveryone}
+        >
           Everyone
         </button>
         {members.map((m) => (
-          <label key={m.id} style={{ marginLeft: 8 }}>
-            <input
-              type="checkbox"
-              checked={sharedBy.includes(m.id)}
-              onChange={() => toggle(m.id)}
-            />
+          <button
+            type="button"
+            key={m.id}
+            className={`pill ${sharedBy.includes(m.id) ? 'on' : ''}`}
+            onClick={() => toggle(m.id)}
+          >
             {m.display_name}
-          </label>
+          </button>
         ))}
       </div>
 
       <button onClick={addReceipt}>Save receipt</button>
-      {message && <p>{message}</p>}
+      {message && <p className="muted">{message}</p>}
 
       <h3>Receipts</h3>
-      <ul>
-        {receipts.map((r) => (
-          <li key={r.id}>
-            {r.description ?? 'Receipt'}: {r.amount.toFixed(2)} paid by{' '}
-            {nameOf(r.paid_by)}, shared by{' '}
-            {r.splits.map((s) => `${nameOf(s.owed_by)} (${s.amount.toFixed(2)})`).join(', ')}{' '}
-            <button onClick={() => deleteReceipt(r.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+      {receipts.length === 0 ? (
+        <p className="muted">No receipts yet.</p>
+      ) : (
+        <ul>
+          {receipts.map((r) => (
+            <li key={r.id} className="receipt">
+              <div className="line">
+                <div>
+                  <strong>{r.description ?? 'Receipt'}</strong>
+                  <span className="eyebrow">paid by {nameOf(r.paid_by)}</span>
+                </div>
+                <span className="amount">{r.amount.toFixed(2)}</span>
+              </div>
+              <div className="chips">
+                {r.splits.map((s, i) => (
+                  <span key={i} className="chip">
+                    {nameOf(s.owed_by)} {s.amount.toFixed(2)}
+                  </span>
+                ))}
+              </div>
+              <div className="line-actions">
+                <button className="act no" onClick={() => deleteReceipt(r.id)}>
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

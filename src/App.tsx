@@ -52,7 +52,11 @@ export default function App() {
       </header>
 
       {selectedTrip ? (
-        <TripDetail trip={selectedTrip} onBack={() => setSelectedTrip(null)} />
+        <TripDetail
+          trip={selectedTrip}
+          userId={session.user.id}
+          onBack={() => setSelectedTrip(null)}
+        />
       ) : (
         <Dashboard session={session} onOpen={setSelectedTrip} />
       )}

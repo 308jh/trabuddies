@@ -13,12 +13,20 @@ type ReceiptRow = {
   description: string | null
   splits: { owed_by: number; amount: number }[]
 }
+type PaymentRow = {
+  id: number
+  from_member: number
+  to_member: number
+  amount: number
+  status: string
+}
 type TripRow = {
   id: number
   name: string
   created_at: string
   trip_members: Member[]
   receipts: ReceiptRow[]
+  payments: PaymentRow[]
 }
 
 const toCents = (n: number) => Math.round(n * 100)
@@ -63,7 +71,7 @@ export default function Dashboard({
     const { data, error } = await supabase
       .from('trips')
       .select(
-        'id, name, created_at, trip_members(id, user_id, display_name), receipts(id, paid_by, amount, description, splits(owed_by, amount))'
+        'id, name, created_at, trip_members(id, user_id, display_name), receipts(id, paid_by, amount, description, splits(owed_by, amount)), payments(id, from_member, to_member, amount, status)'
       )
       .order('created_at', { ascending: false })
     if (error) setError(error.message)
@@ -83,6 +91,7 @@ export default function Dashboard({
     let owe = 0
     const payments: { key: string; text: string; amount: number; trip: string; get: boolean }[] = []
     const recent: { id: number; trip: string; title: string; who: string; amount: number }[] = []
+    const approvals: { key: string; text: string; amount: number; trip: TripRow }[] = []
 
     const cards = rows.map((t) => {
       const me = t.trip_members.find((m) => m.user_id === myId)
@@ -90,7 +99,8 @@ export default function Dashboard({
         t.trip_members.find((m) => m.id === id)?.display_name ?? 'Unknown'
 
       const total = t.receipts.reduce((s, r) => s + toCents(r.amount), 0)
-      const net = computeNet(t.receipts)
+      // approved repayments count; pending ones wait for the receiver's approval
+      const net = computeNet(t.receipts, t.payments ?? [])
       const mine = me ? (net.get(me.id) ?? 0) : 0
 
       const myShare = me
@@ -115,6 +125,17 @@ export default function Dashboard({
       if (mine < 0) owe += -mine
 
       if (me) {
+        for (const p of t.payments ?? []) {
+          if (p.status === 'pending' && p.to_member === me.id) {
+            approvals.push({
+              key: String(p.id),
+              text: `${nameOf(p.from_member)} says they paid you`,
+              amount: toCents(p.amount),
+              trip: t,
+            })
+          }
+        }
+
         settleUp(net).forEach((p, i) => {
           if (p.from === me.id) {
             payments.push({
@@ -157,7 +178,7 @@ export default function Dashboard({
     })
 
     recent.sort((a, b) => b.id - a.id)
-    return { cards, share, paid, owed, owe, payments, recent: recent.slice(0, 6) }
+    return { cards, share, paid, owed, owe, payments, approvals, recent: recent.slice(0, 6) }
   }, [rows, myId])
 
   async function createTrip() {
@@ -258,6 +279,30 @@ export default function Dashboard({
         </div>
 
         <aside className="dash-side">
+          {view.approvals.length > 0 && (
+            <div className="card attention">
+              <h3>Needs your approval</h3>
+              <ul>
+                {view.approvals.map((a) => (
+                  <li
+                    key={a.key}
+                    className="clickable"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => open(a.trip)}
+                    onKeyDown={(e) => onKey(e, a.trip)}
+                  >
+                    <div className="row-line">
+                      <span>{a.text}</span>
+                      <span className="pos-text">{money(a.amount)}</span>
+                    </div>
+                    <span className="eyebrow">{a.trip.name} · tap to review</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="card">
             <h3>To settle</h3>
             {view.payments.length === 0 ? (

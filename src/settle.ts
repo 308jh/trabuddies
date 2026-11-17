@@ -4,18 +4,37 @@ export type ReceiptData = {
   splits: { owed_by: number; amount: number }[]
 }
 
+// a repayment between two people ("Ali paid jinhao 30.00")
+export type PaymentData = {
+  from_member: number
+  to_member: number
+  amount: number
+  status: string
+}
+
 export type Payment = { from: number; to: number; amount: number } // amount in cents
 
 const toCents = (n: number) => Math.round(n * 100)
 
-// net position per member, in cents: paid minus owed
-export function computeNet(receipts: ReceiptData[]): Map<number, number> {
+// net position per member, in cents:
+// (what they paid for others - what they owe) + repayments that were APPROVED
+export function computeNet(
+  receipts: ReceiptData[],
+  payments: PaymentData[] = []
+): Map<number, number> {
   const net = new Map<number, number>()
   const add = (id: number, cents: number) => net.set(id, (net.get(id) ?? 0) + cents)
 
   for (const r of receipts) {
     add(r.paid_by, toCents(r.amount))
     for (const s of r.splits) add(s.owed_by, -toCents(s.amount))
+  }
+
+  // a repayment lowers what the payer owes and what the receiver is owed
+  for (const p of payments) {
+    if (p.status !== 'confirmed') continue
+    add(p.from_member, toCents(p.amount))
+    add(p.to_member, -toCents(p.amount))
   }
   return net
 }

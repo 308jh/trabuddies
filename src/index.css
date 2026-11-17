@@ -405,3 +405,90 @@ li.neg { color: var(--danger); font-weight: 600; }
   color: var(--dim);
 }
 
+/* ---------- payments, receipts and pill buttons ---------- */
+
+/* a row with a name on the left and an amount on the right */
+.line {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.line strong { display: block; font-weight: 600; }
+.line .eyebrow { margin-top: 2px; letter-spacing: 1.5px; }
+.amount { font-family: var(--mono); font-size: 0.95rem; white-space: nowrap; }
+.line-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+/* small action buttons inside list rows: white = normal, cyan = approve, red outline = no/undo */
+.card li button.act,
+.card li button.act:hover {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: center;
+  border-radius: var(--radius);
+  box-shadow: none;
+  background: #fff;
+  color: #000;
+  border: 1px solid #fff;
+}
+.card li button.act.ok,
+.card li button.act.ok:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04121a;
+}
+.card li button.act.no,
+.card li button.act.no:hover {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.card li button.act:hover { opacity: 0.85; }
+.card li button.act::after { content: none; }
+
+/* "Paid by" and "Shared by" choices */
+.field-label {
+  display: block;
+  margin: 18px 0 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+button.pill,
+button.pill:hover {
+  margin: 0;
+  padding: 9px 15px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: none;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: none;
+}
+button.pill:hover { border-color: var(--accent); }
+button.pill.on,
+button.pill.on:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04121a;
+}
+
+/* dashboard: payments waiting for your approval */
+.card.attention { border-color: var(--accent); box-shadow: 0 0 40px -22px var(--accent); }
+li.clickable { cursor: pointer; }
+li.clickable:hover .eyebrow { color: var(--accent); }
+
+
