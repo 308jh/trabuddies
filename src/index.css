@@ -491,4 +491,68 @@ button.pill.on:hover {
 li.clickable { cursor: pointer; }
 li.clickable:hover .eyebrow { color: var(--accent); }
 
+/* ---------- itemized receipts + scan ---------- */
+
+/* "Split equally | Itemized" switch */
+.seg { display: flex; gap: 0; margin: 14px 0 6px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.seg button,
+.seg button:hover {
+  flex: 1; margin: 0; padding: 11px 8px; font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+  text-transform: uppercase; background: transparent; color: var(--dim); border: 0; border-radius: 0; box-shadow: none;
+}
+.seg button.on,
+.seg button.on:hover { background: #fff; color: #000; }
+.muted.small, p.small { font-size: 12px; margin: 6px 0 0; }
+
+/* scan box */
+.scan-box { margin: 14px 0 4px; padding: 14px; border: 1px dashed var(--accent); border-radius: var(--radius); background: rgba(76, 201, 240, 0.05); }
+.scan-box .muted { display: block; margin-top: 8px; font-size: 12px; }
+button.scan-btn,
+button.scan-btn:hover { margin: 0; background: var(--accent); border-color: var(--accent); color: #04121a; }
+button.scan-btn:disabled { opacity: 0.6; }
+.progress { position: relative; margin-top: 12px; height: 26px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.progress .bar { position: absolute; inset: 0 auto 0 0; background: rgba(76, 201, 240, 0.35); transition: width 0.3s; }
+.progress span { position: relative; display: block; text-align: center; font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; line-height: 26px; text-transform: uppercase; }
+.warn { margin: 12px 0 0; padding: 10px 12px; font-size: 13px; line-height: 1.5; border: 1px solid #f5c542; border-radius: var(--radius); color: #f5c542; background: rgba(245, 197, 66, 0.07); }
+
+/* item rows */
+.item-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.item-rows li.item-row { padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(255, 255, 255, 0.02); }
+.item-top { display: flex; gap: 8px; align-items: center; }
+.item-top input { margin: 0; min-width: 0; }
+.item-top input:first-child { flex: 1; }
+.item-top .item-amount { width: 96px; flex: none; text-align: right; font-family: var(--mono); }
+button.item-x,
+button.item-x:hover { flex: none; width: 38px; height: 38px; margin: 0; padding: 0; font-size: 20px; line-height: 1; letter-spacing: 0; background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: var(--radius); box-shadow: none; }
+.pills.small { margin-top: 10px; gap: 6px; }
+.pills.small button.pill { padding: 6px 12px; font-size: 12px; }
+button.ghost,
+button.ghost:hover { margin: 10px 0 0; background: transparent; color: var(--accent); border: 1px dashed var(--accent); box-shadow: none; }
+
+/* live "who pays what" */
+.summary { margin-top: 18px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(255, 255, 255, 0.03); }
+.summary .field-label { margin-top: 0; }
+.summary .line { padding: 5px 0; align-items: center; }
+.summary .line .eyebrow { display: inline; margin-left: 6px; }
+.summary .line.total { margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line); font-weight: 700; }
+
+/* items inside a saved receipt */
+details.items { margin-top: 10px; }
+details.items summary { cursor: pointer; font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); }
+details.items ul { list-style: none; margin: 8px 0 0; padding: 0; }
+details.items li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line); background: none; border-radius: 0; }
+details.items li .eyebrow { display: block; margin-top: 2px; }
+
+/* pills inside item rows must not pick up the generic "button inside a list row" look */
+.card li.item-row button.pill,
+.card li.item-row button.pill:hover {
+  display: inline-block; width: auto; margin: 0; padding: 6px 12px; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.3px; text-transform: none; text-align: center; background: transparent; color: var(--text);
+  border: 1px solid var(--line); border-radius: 999px; box-shadow: none;
+}
+.card li.item-row button.pill:hover { border-color: var(--accent); }
+.card li.item-row button.pill.on,
+.card li.item-row button.pill.on:hover { background: var(--accent); border-color: var(--accent); color: #04121a; }
+.card li.item-row button.pill::after { content: none; }
+
 

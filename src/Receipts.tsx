@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import type { Member } from './TripDetail'
+import ItemizedForm from './ItemizedForm'
 
 type Receipt = {
   id: number
   paid_by: number
   amount: number
+  extras: number | null
   description: string | null
   splits: { owed_by: number; amount: number }[]
+  receipt_items: {
+    id: number
+    name: string
+    amount: number
+    item_shares: { member_id: number }[]
+  }[]
 }
 
 // Split in cents so the shares always add up to the exact total
@@ -35,15 +43,17 @@ export default function Receipts({
   const [amount, setAmount] = useState('')
   const [paidBy, setPaidBy] = useState<number | ''>('')
   const [sharedBy, setSharedBy] = useState<number[]>([])
+  const [mode, setMode] = useState<'equal' | 'items'>('equal')
   const [message, setMessage] = useState('')
 
-  const nameOf = (id: number) =>
-    members.find((m) => m.id === id)?.display_name ?? 'Unknown'
+  const nameOf = (id: number) => members.find((m) => m.id === id)?.display_name ?? 'Unknown'
 
   async function loadReceipts() {
     const { data, error } = await supabase
       .from('receipts')
-      .select('id, paid_by, amount, description, splits(owed_by, amount)')
+      .select(
+        'id, paid_by, amount, extras, description, splits(owed_by, amount), receipt_items(id, name, amount, item_shares(member_id))',
+      )
       .eq('trip_id', tripId)
       .order('id', { ascending: false })
     if (error) setMessage(error.message)
@@ -55,9 +65,7 @@ export default function Receipts({
   }, [tripId])
 
   function toggle(id: number) {
-    setSharedBy((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    )
+    setSharedBy((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
   const everyone = members.length > 0 && sharedBy.length === members.length
@@ -129,14 +137,41 @@ export default function Receipts({
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
-      <input
-        type="number"
-        inputMode="decimal"
-        step="0.01"
-        placeholder="Amount"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
+      <div className="seg">
+        <button
+          type="button"
+          className={mode === 'equal' ? 'on' : ''}
+          onClick={() => setMode('equal')}
+        >
+          Split equally
+        </button>
+        <button
+          type="button"
+          className={mode === 'items' ? 'on' : ''}
+          onClick={() => setMode('items')}
+        >
+          Itemized
+        </button>
+      </div>
+      {mode === 'equal' ? (
+        <p className="muted small">
+          Everyone who shares it pays the same. Good for tickets, hotels, buffets.
+        </p>
+      ) : (
+        <p className="muted small">
+          Add each dish or drink and tick who had it. Good for restaurants.
+        </p>
+      )}
+      {mode === 'equal' && (
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          placeholder="Amount"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      )}
 
       <span className="field-label">Paid by</span>
       <div className="pills">
@@ -152,28 +187,45 @@ export default function Receipts({
         ))}
       </div>
 
-      <span className="field-label">Shared by</span>
-      <div className="pills">
-        <button
-          type="button"
-          className={`pill ${everyone ? 'on' : ''}`}
-          onClick={toggleEveryone}
-        >
-          Everyone
-        </button>
-        {members.map((m) => (
-          <button
-            type="button"
-            key={m.id}
-            className={`pill ${sharedBy.includes(m.id) ? 'on' : ''}`}
-            onClick={() => toggle(m.id)}
-          >
-            {m.display_name}
-          </button>
-        ))}
-      </div>
-
-      <button onClick={addReceipt}>Save receipt</button>
+      {mode === 'equal' ? (
+        <>
+          <span className="field-label">Shared by</span>
+          <div className="pills">
+            <button
+              type="button"
+              className={`pill ${everyone ? 'on' : ''}`}
+              onClick={toggleEveryone}
+            >
+              Everyone
+            </button>
+            {members.map((m) => (
+              <button
+                type="button"
+                key={m.id}
+                className={`pill ${sharedBy.includes(m.id) ? 'on' : ''}`}
+                onClick={() => toggle(m.id)}
+              >
+                {m.display_name}
+              </button>
+            ))}
+          </div>
+          <button onClick={addReceipt}>Save receipt</button>
+        </>
+      ) : (
+        <ItemizedForm
+          tripId={tripId}
+          members={members}
+          description={description}
+          paidBy={paidBy}
+          onSaved={() => {
+            setDescription('')
+            setPaidBy('')
+            setMessage('')
+            loadReceipts()
+            onChange()
+          }}
+        />
+      )}
       {message && <p className="muted">{message}</p>}
 
       <h3>Receipts</h3>
@@ -190,6 +242,35 @@ export default function Receipts({
                 </div>
                 <span className="amount">{r.amount.toFixed(2)}</span>
               </div>
+              {r.receipt_items?.length > 0 && (
+                <details className="items">
+                  <summary>
+                    {r.receipt_items.length} item{r.receipt_items.length > 1 ? 's' : ''}
+                  </summary>
+                  <ul>
+                    {r.receipt_items.map((it) => (
+                      <li key={it.id}>
+                        <span>
+                          {it.name}
+                          <span className="eyebrow">
+                            {it.item_shares.map((x) => nameOf(x.member_id)).join(', ')}
+                          </span>
+                        </span>
+                        <span className="amount">{it.amount.toFixed(2)}</span>
+                      </li>
+                    ))}
+                    {Number(r.extras) !== 0 && (
+                      <li>
+                        <span>
+                          {Number(r.extras) > 0 ? 'Service charge, tax' : 'Discount, rounding'}
+                          <span className="eyebrow">shared by order</span>
+                        </span>
+                        <span className="amount">{Number(r.extras).toFixed(2)}</span>
+                      </li>
+                    )}
+                  </ul>
+                </details>
+              )}
               <div className="chips">
                 {r.splits.map((s, i) => (
                   <span key={i} className="chip">
