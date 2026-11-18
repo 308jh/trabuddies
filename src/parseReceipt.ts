@@ -41,7 +41,7 @@ export function parseReceipt(text: string): ParsedReceipt {
   const items: ParsedReceipt['items'] = []
   let chargeSum = 0
   let total: number | null = null
-  let subtotal: number | null = null
+  
 
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim()
@@ -53,10 +53,8 @@ export function parseReceipt(text: string): ParsedReceipt {
     if (!Number.isFinite(amount)) continue
     const label = clean(line.slice(0, prices[0].index))
 
-    if (SUBTOTAL.test(line)) {
-      subtotal = amount
-      continue
-    }
+    if (SUBTOTAL.test(line)) continue
+    
     if (TOTAL.test(line) && !CHARGE.test(label.replace(TOTAL, ''))) {
       total = amount // the last "total" line is the final one (after discounts)
       continue
