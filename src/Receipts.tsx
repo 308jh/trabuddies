@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 import type { Member } from './TripDetail'
 import ItemizedForm from './ItemizedForm'
+import StepHead from './Step'
 
 type Receipt = {
   id: number
@@ -45,6 +46,10 @@ export default function Receipts({
   const [sharedBy, setSharedBy] = useState<number[]>([])
   const [mode, setMode] = useState<'equal' | 'items'>('equal')
   const [message, setMessage] = useState('')
+  const [errs, setErrs] = useState<{ payer?: boolean; amount?: boolean; shared?: boolean }>({})
+  const payerRef = useRef<HTMLDivElement>(null)
+  const amountRef = useRef<HTMLDivElement>(null)
+  const sharedRef = useRef<HTMLDivElement>(null)
 
   const nameOf = (id: number) => members.find((m) => m.id === id)?.display_name ?? 'Unknown'
 
@@ -75,10 +80,25 @@ export default function Receipts({
 
   async function addReceipt() {
     const total = parseFloat(amount)
-    if (!total || total <= 0 || paidBy === '' || sharedBy.length === 0) {
-      setMessage('Fill in the amount, who paid, and who shared it.')
+    const bad = {
+      payer: paidBy === '',
+      amount: !total || total <= 0,
+      shared: sharedBy.length === 0,
+    }
+    if (bad.payer || bad.amount || bad.shared) {
+      setErrs(bad)
+      const first = bad.payer ? payerRef : bad.amount ? amountRef : sharedRef
+      first.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setMessage(
+        bad.payer
+          ? 'Please choose who paid the bill (step 2).'
+          : bad.amount
+            ? 'Please type the amount (step 3).'
+            : 'Please choose who shared it (step 4).',
+      )
       return
     }
+    setErrs({})
 
     const { data: receipt, error } = await supabase
       .from('receipts')
@@ -132,82 +152,123 @@ export default function Receipts({
   return (
     <div className="card">
       <h3>Add a receipt</h3>
-      <input
-        placeholder="What was it for? (e.g. Dinner)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
       <div className="seg">
         <button
           type="button"
           className={mode === 'equal' ? 'on' : ''}
-          onClick={() => setMode('equal')}
+          onClick={() => {
+            setMode('equal')
+            setMessage('')
+          }}
         >
           Split equally
         </button>
         <button
           type="button"
           className={mode === 'items' ? 'on' : ''}
-          onClick={() => setMode('items')}
+          onClick={() => {
+            setMode('items')
+            setMessage('')
+          }}
         >
           Itemized
         </button>
       </div>
-      {mode === 'equal' ? (
-        <p className="muted small">
-          Everyone who shares it pays the same. Good for tickets, hotels, buffets.
-        </p>
-      ) : (
-        <p className="muted small">
-          Add each dish or drink and tick who had it. Good for restaurants.
-        </p>
-      )}
-      {mode === 'equal' && (
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.01"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-      )}
+      <p className="muted small">
+        {mode === 'equal'
+          ? 'Everyone who shares it pays the same. Good for tickets, hotels, buffets.'
+          : 'Add each dish or drink and tick who had it. Good for restaurants.'}
+      </p>
 
-      <span className="field-label">Paid by</span>
-      <div className="pills">
-        {members.map((m) => (
-          <button
-            type="button"
-            key={m.id}
-            className={`pill ${paidBy === m.id ? 'on' : ''}`}
-            onClick={() => setPaidBy(m.id)}
-          >
-            {m.display_name}
-          </button>
-        ))}
+      <div className="step">
+        <StepHead
+          n={1}
+          title="What was it for?"
+          hint="Optional, for example Dinner or Train tickets."
+        />
+        <input
+          placeholder="e.g. Dinner"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+
+      <div ref={payerRef} className={`step ${errs.payer ? 'needs' : ''}`}>
+        <StepHead
+          n={2}
+          title="Who paid the bill?"
+          hint="Tap the person who paid at the counter."
+          required
+        />
+        <div className="pills">
+          {members.map((m) => (
+            <button
+              type="button"
+              key={m.id}
+              className={`pill ${paidBy === m.id ? 'on' : ''}`}
+              onClick={() => {
+                setPaidBy(m.id)
+                setMessage('')
+                setErrs((e) => ({ ...e, payer: false }))
+              }}
+            >
+              {m.display_name}
+            </button>
+          ))}
+        </div>
+        {errs.payer && <p className="bad-note">Choose who paid.</p>}
       </div>
 
       {mode === 'equal' ? (
         <>
-          <span className="field-label">Shared by</span>
-          <div className="pills">
-            <button
-              type="button"
-              className={`pill ${everyone ? 'on' : ''}`}
-              onClick={toggleEveryone}
-            >
-              Everyone
-            </button>
-            {members.map((m) => (
+          <div ref={amountRef} className={`step ${errs.amount ? 'needs' : ''}`}>
+            <StepHead
+              n={3}
+              title="How much was the bill?"
+              hint="The total amount on the receipt."
+              required
+            />
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              placeholder="e.g. 90.00"
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value)
+                setErrs((x) => ({ ...x, amount: false }))
+              }}
+            />
+          </div>
+          <div ref={sharedRef} className={`step ${errs.shared ? 'needs' : ''}`}>
+            <StepHead
+              n={4}
+              title="Who shared it?"
+              hint="Tap everyone who should pay a part."
+              required
+            />
+            <div className="pills">
               <button
                 type="button"
-                key={m.id}
-                className={`pill ${sharedBy.includes(m.id) ? 'on' : ''}`}
-                onClick={() => toggle(m.id)}
+                className={`pill ${everyone ? 'on' : ''}`}
+                onClick={toggleEveryone}
               >
-                {m.display_name}
+                Everyone
               </button>
-            ))}
+              {members.map((m) => (
+                <button
+                  type="button"
+                  key={m.id}
+                  className={`pill ${sharedBy.includes(m.id) ? 'on' : ''}`}
+                  onClick={() => {
+                    toggle(m.id)
+                    setErrs((x) => ({ ...x, shared: false }))
+                  }}
+                >
+                  {m.display_name}
+                </button>
+              ))}
+            </div>
           </div>
           <button onClick={addReceipt}>Save receipt</button>
         </>
@@ -217,6 +278,10 @@ export default function Receipts({
           members={members}
           description={description}
           paidBy={paidBy}
+          onNeedPayer={() => {
+            setErrs((e) => ({ ...e, payer: true }))
+            payerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }}
           onSaved={() => {
             setDescription('')
             setPaidBy('')
@@ -226,7 +291,7 @@ export default function Receipts({
           }}
         />
       )}
-      {message && <p className="muted">{message}</p>}
+      {message && <p className={message === 'Receipt added!' ? 'ok-note' : 'warn'}>{message}</p>}
 
       <h3>Receipts</h3>
       {receipts.length === 0 ? (
